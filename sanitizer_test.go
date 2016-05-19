@@ -39,6 +39,28 @@ var _ = Describe("Sanitizer", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
+	Describe("NewSanitizer", func() {
+		Context("when a key is empty", func() {
+			It("ignores the key", func() {
+				pairs[""] = "***empty-redaction***"
+				s = sanitizer.NewSanitizer(pairs, logFile)
+
+				_, err := s.Write([]byte("not redacted at all"))
+				Expect(err).NotTo(HaveOccurred())
+
+				err = logFile.Sync()
+				Expect(err).NotTo(HaveOccurred())
+
+				err = logFile.Close()
+				Expect(err).NotTo(HaveOccurred())
+
+				b, err := ioutil.ReadFile(logFilepath)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(b).To(Equal([]byte("not redacted at all")))
+			})
+		})
+	})
+
 	Describe("Write", func() {
 		It("sanitizes correctly", func() {
 			pairs["secret_value"] = "***secret-redacted***"
